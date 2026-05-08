@@ -1,7 +1,9 @@
+import { UserInterface } from "@/types/user.types";
 import mongoose, { Schema, models, model} from "mongoose";
 
 
-const userSchema = new Schema({
+
+const userSchema = new Schema<UserInterface>({
 
     name: {
         type: String,
@@ -21,5 +23,5 @@ const userSchema = new Schema({
 })
 
 
-export const User = models.User || model("User", userSchema)
+export const User = models.User || model<UserInterface>("User", userSchema)
 
