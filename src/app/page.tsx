@@ -1,4 +1,5 @@
 import BackgroundRippleEffectDemo from "@/components/background-ripple-effect-demo";
+import TabsDemo from "@/components/tabs-demo";
 import TeamShowcase from "@/components/team-section";
 
 export default function Home() {
@@ -7,6 +8,7 @@ export default function Home() {
     <>
       <BackgroundRippleEffectDemo />
       <TeamShowcase />
+      <TabsDemo />
     </>
   );
 }
