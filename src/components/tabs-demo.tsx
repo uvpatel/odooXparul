@@ -1,6 +1,6 @@
 "use client";
 
-import { Tabs } from "@/components/ui/tabs";
+import { Tabs } from "@/components/ui/animated-tabs";
 
 export default function TabsDemo() {
   const tabs = [
@@ -66,7 +66,7 @@ export default function TabsDemo() {
 const DummyContent = () => {
   return (
     <img
-      src="/linear.webp"
+      src="/image.png"
       alt="dummy image"
       width="1000"
       height="1000"

@@ -17,45 +17,54 @@ export default async function TeamShowcase() {
       name: "Urvil Patel",
       designation: "The Founder",
       image:
-        "https://www.image2url.com/r2/default/images/1776962033318-b57244e9-647c-4608-b597-64cd7f685453.jpeg",
+        "https://www.image2url.com/r2/default/images/1778320414754-93ecbe0d-21fb-4f5f-b2d6-a15853f4feac.jpeg",
       bio: "I don't just write code - I design systems that think, scale, and evolve. Every function I create is a decision, every architecture a strategy, and every bug a puzzle waiting to be understood. Technology is my language, logic is my mindset, and building is my instinct.",
       tag: "Founder",
     },
     {
-      id: 3,
-      name: "Darshan Ajudiya",
-      designation: "CTO & Supporter",
-      image:
-        "https://www.image2url.com/r2/default/images/1776964181383-e5e6c919-3d42-4ead-ab8d-fda131075cf1.jpeg",
-      bio: "Drives the technical direction of the team while backing product growth with practical engineering decisions.",
-      tag: "Technology",
+        id: 3,
+        name: "Darshan Ajudiya",
+        designation: "CTO & Supporter",
+        image:
+        "https://www.image2url.com/r2/default/images/1778320325126-80dad7fc-8c70-40c9-b9e6-461b6a96d710.jpeg",
+        bio: "Drives the technical direction of the team while backing product growth with practical engineering decisions.",
+        tag: "Technology",
     },
     {
-      id: 4,
+        id: 4,
       name: "Hiten Bhadiyadra",
       designation: "CFO | Investor",
       image:
-        "https://www.image2url.com/r2/default/images/1776962992087-08514c8f-9747-4d90-b7fe-bc9021221f7f.jpeg",
-      bio: "Supports the company with financial discipline and investor perspective, helping every bet stay grounded in strategy.",
+        "https://www.image2url.com/r2/default/images/1778320260430-dd7490df-7791-4861-b622-6ae126034e3b.jpeg",
+        bio: "Supports the company with financial discipline and investor perspective, helping every bet stay grounded in strategy.",
       tag: "Finance",
     },
     {
-      id: 5,
-      name: "Krish Ramani",
-      designation: "Co-Founder & Supporter",
-      image:
-        "https://www.image2url.com/r2/default/images/1776964043226-47418bb4-be23-43e0-a0d3-8b8d2777e360.jpeg",
-      bio: "Strengthens the foundation of the team through partnership, support, and a strong belief in the mission being built.",
-      tag: "Support",
+        id: 5,
+        name: "Krish Ramani",
+        designation: "Co-Founder & Supporter",
+        image:
+        "https://www.image2url.com/r2/default/images/1778320490480-db71ec47-46b8-470b-b9d3-c0718a5b27a9.jpeg",
+        bio: "Strengthens the foundation of the team through partnership, support, and a strong belief in the mission being built.",
+        tag: "Support",
     },
     {
-      id: 6,
-      name: "Jeet Patel",
-      designation: "CPO & Investor",
+        id: 6,
+        name: "Jeet Patel",
+        designation: "CPO & Investor",
+        image:
+        "https://www.image2url.com/r2/default/images/1778320456432-7d1ded71-1ebe-4490-bb97-f2ded2f7f91f.jpeg",
+        bio: "Shapes product direction with an investor mindset, balancing user value, market fit, and long-term growth.",
+        tag: "Product",
+    },
+    {
+      id: 2,
+      name: "Urvish Patel",
+      designation: "CEO",
       image:
-        "https://www.image2url.com/r2/default/images/1776963230717-5d060603-7552-4eeb-baa5-fc6ed10131b7.jpeg",
-      bio: "Shapes product direction with an investor mindset, balancing user value, market fit, and long-term growth.",
-      tag: "Product",
+        "https://www.image2url.com/r2/default/images/1778320368689-769149bb-4f8b-422d-a583-d14f4a9f5b51.jpeg",
+      bio: "Leads the company with clarity and momentum, turning long-term vision into focused execution across the business.",
+      tag: "Leadership",
     },
   ];
 
