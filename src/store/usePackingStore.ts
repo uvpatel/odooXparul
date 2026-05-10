@@ -1,10 +1,20 @@
 import { create } from "zustand"
 
+export interface PackingRecord {
+  _id: string
+  tripId: string
+  item_name: string
+  category?: string
+  checked?: boolean
+}
+
+export type PackingPayload = Omit<Partial<PackingRecord>, "_id">
+
 interface PackingStore {
-  items: any[]
+  items: PackingRecord[]
   loading: boolean
   fetchItems: (tripId: string) => Promise<void>
-  createItem: (data: any) => Promise<any>
+  createItem: (data: PackingPayload) => Promise<PackingRecord | { error?: string }>
   toggleItem: (id: string, checked: boolean) => Promise<void>
   deleteItem: (id: string) => Promise<void>
 }
@@ -24,14 +34,14 @@ export const usePackingStore = create<PackingStore>((set) => ({
     }
   },
 
-  createItem: async (data: any) => {
+  createItem: async (data: PackingPayload) => {
     const res = await fetch("/api/packing", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
     const item = await res.json()
-    if (res.ok) set((s) => ({ items: [...s.items, item] }))
+    if (res.ok) set((state) => ({ items: [...state.items, item] }))
     return item
   },
 
@@ -43,12 +53,12 @@ export const usePackingStore = create<PackingStore>((set) => ({
     })
     if (res.ok) {
       const updated = await res.json()
-      set((s) => ({ items: s.items.map((i) => (i._id === id ? updated : i)) }))
+      set((state) => ({ items: state.items.map((item) => (item._id === id ? updated : item)) }))
     }
   },
 
   deleteItem: async (id: string) => {
     const res = await fetch(`/api/packing/${id}`, { method: "DELETE" })
-    if (res.ok) set((s) => ({ items: s.items.filter((i) => i._id !== id) }))
+    if (res.ok) set((state) => ({ items: state.items.filter((item) => item._id !== id) }))
   },
 }))

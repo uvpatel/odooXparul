@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server"
 import { connectDB } from "@/lib/mongodb"
 import { createExpenseSchema } from "@/schemas/expense.schema"
 import { getExpensesByTrip, createExpense } from "@/controllers/expense.controller"
+import { Expense } from "@/models/expenses.model"
 
 export async function GET(req: Request) {
   try {
@@ -12,11 +13,11 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url)
     const tripId = searchParams.get("tripId")
-    if (!tripId) return NextResponse.json({ error: "tripId is required" }, { status: 400 })
-
-    const expenses = await getExpensesByTrip(userId, tripId)
+    const expenses = tripId
+      ? await getExpensesByTrip(userId, tripId)
+      : await Expense.find({ userId }).sort({ createdAt: -1 }).lean()
     return NextResponse.json(expenses)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch expenses" }, { status: 500 })
   }
 }
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
 
     const expense = await createExpense({ ...validated.data, userId })
     return NextResponse.json(expense, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to create expense" }, { status: 500 })
   }
 }

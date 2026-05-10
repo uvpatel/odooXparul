@@ -1,197 +1,219 @@
-"use client";
+"use client"
 
-import React, { useEffect, useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MapPin, Plus, MoreHorizontal, DollarSign, GripVertical, Loader2, Navigation } from "lucide-react";
-import { useTripStore } from "@/store/useTripStore";
+import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { motion } from "motion/react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
+import { CalendarDays, Clock, DollarSign, GripVertical, MapPin, Navigation, Plus, Trash2 } from "lucide-react"
+
+interface Trip {
+  _id: string
+  title: string
+  destination: string
+  budget?: number
+}
+
+interface Activity {
+  _id: string
+  tripId: string
+  title: string
+  type?: string
+  cost?: number
+  duration?: string
+  time?: string
+  location?: string
+  day?: number
+}
 
 export default function ItineraryBuilderPage() {
-  const searchParams = useSearchParams();
-  const tripId = searchParams.get("tripId");
-  const { currentTrip, fetchTrip } = useTripStore();
-  const [activities, setActivities] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams()
+  const requestedTripId = searchParams.get("tripId")
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [selectedTripId, setSelectedTripId] = useState("")
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [loading, setLoading] = useState(true)
+  const [newActivity, setNewActivity] = useState({ title: "", location: "", time: "", cost: "", day: "1", type: "Sightseeing" })
 
   useEffect(() => {
-    if (tripId) {
-      fetchTrip(tripId);
-      fetch(`/api/activities?tripId=${tripId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setActivities(Array.isArray(data) ? data : []);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, [tripId, fetchTrip]);
+    let active = true
 
-  // Group activities by day
+    fetch("/api/trips")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return
+        const nextTrips = Array.isArray(data) ? data : []
+        setTrips(nextTrips)
+        setSelectedTripId(requestedTripId || nextTrips[0]?._id || "")
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [requestedTripId])
+
+  useEffect(() => {
+    if (!selectedTripId) return
+
+    let active = true
+    fetch(`/api/activities?tripId=${selectedTripId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active) setActivities(Array.isArray(data) ? data : [])
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [selectedTripId])
+
+  const currentTrip = trips.find((trip) => trip._id === selectedTripId)
   const itineraryDays = useMemo(() => {
-    const grouped: Record<number, any[]> = {};
-    for (const act of activities) {
-      const day = act.day || 1;
-      if (!grouped[day]) grouped[day] = [];
-      grouped[day].push(act);
+    const grouped = new Map<number, Activity[]>()
+    for (const activity of activities) {
+      const day = activity.day || 1
+      grouped.set(day, [...(grouped.get(day) || []), activity])
     }
-    return Object.entries(grouped)
-      .map(([day, acts]) => ({ day: Number(day), activities: acts }))
-      .sort((a, b) => a.day - b.day);
-  }, [activities]);
+    return Array.from(grouped, ([day, dayActivities]) => ({ day, activities: dayActivities })).sort((a, b) => a.day - b.day)
+  }, [activities])
+  const totalCost = activities.reduce((sum, activity) => sum + (activity.cost || 0), 0)
 
-  const totalCost = activities.reduce((sum, a) => sum + (a.cost || 0), 0);
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "Food": return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
-      case "Sightseeing": return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
-      case "Activity": return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-      case "Stay": return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
-      case "Transport": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
-      default: return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300";
+  async function addActivity() {
+    if (!selectedTripId || !newActivity.title.trim()) return
+    const optimisticId = `temp-${Date.now()}`
+    const optimistic: Activity = {
+      _id: optimisticId,
+      tripId: selectedTripId,
+      title: newActivity.title,
+      location: newActivity.location,
+      time: newActivity.time,
+      cost: Number(newActivity.cost) || 0,
+      day: Number(newActivity.day) || 1,
+      type: newActivity.type,
     }
-  };
+    setActivities((items) => [...items, optimistic])
+    setNewActivity({ title: "", location: "", time: "", cost: "", day: "1", type: "Sightseeing" })
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-        <span className="ml-3 text-neutral-500">Loading itinerary...</span>
-      </div>
-    );
+    const res = await fetch("/api/activities", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...optimistic, _id: undefined }),
+    })
+    const saved = await res.json()
+    if (res.ok) {
+      setActivities((items) => items.map((item) => (item._id === optimisticId ? saved : item)))
+    } else {
+      setActivities((items) => items.filter((item) => item._id !== optimisticId))
+    }
   }
 
-  if (!tripId) {
+  async function deleteActivity(id: string) {
+    const previous = activities
+    setActivities((items) => items.filter((item) => item._id !== id))
+    const res = await fetch(`/api/activities/${id}`, { method: "DELETE" })
+    if (!res.ok) setActivities(previous)
+  }
+
+  if (loading) return <ItinerarySkeleton />
+
+  if (!selectedTripId) {
     return (
-      <div className="container mx-auto max-w-5xl p-6 text-center py-20 space-y-4">
-        <h2 className="text-2xl font-semibold text-neutral-600">No trip selected</h2>
-        <p className="text-neutral-500">Go to My Trips and select a trip to view its itinerary.</p>
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 p-10 text-center">
+        <CalendarDays className="h-10 w-10 text-muted-foreground" />
+        <h1 className="text-2xl font-semibold">No trip selected</h1>
+        <p className="text-sm text-muted-foreground">Create a trip first, then your itinerary timeline will appear here.</p>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="container mx-auto max-w-5xl p-6 space-y-8 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          {currentTrip && (
-            <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-none mb-2">
-              {currentTrip.title}
-            </Badge>
-          )}
-          <h1 className="text-3xl font-bold tracking-tight">Itinerary Builder</h1>
-          <p className="text-neutral-500 mt-1">
-            {currentTrip?.destination || "Your trip"} — {itineraryDays.length} days, {activities.length} activities
-          </p>
+          <Badge variant="outline" className="mb-3 rounded-md">{currentTrip?.title || "Selected trip"}</Badge>
+          <h1 className="text-3xl font-semibold tracking-tight">Itinerary Builder</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{currentTrip?.destination || "Destination"} - {activities.length} activities, INR {totalCost.toLocaleString()} planned</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="gap-2">
-            <Navigation className="h-4 w-4" /> Map View
-          </Button>
-        </div>
+        <Button variant="outline"><Navigation className="h-4 w-4" /> Map placeholder</Button>
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <Card>
+        <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_1fr_120px_120px_120px_auto]">
+          <Input placeholder="Activity title" value={newActivity.title} onChange={(e) => setNewActivity((value) => ({ ...value, title: e.target.value }))} />
+          <Input placeholder="Location" value={newActivity.location} onChange={(e) => setNewActivity((value) => ({ ...value, location: e.target.value }))} />
+          <Input placeholder="Time" value={newActivity.time} onChange={(e) => setNewActivity((value) => ({ ...value, time: e.target.value }))} />
+          <Input placeholder="Day" type="number" value={newActivity.day} onChange={(e) => setNewActivity((value) => ({ ...value, day: e.target.value }))} />
+          <Input placeholder="Cost" type="number" value={newActivity.cost} onChange={(e) => setNewActivity((value) => ({ ...value, cost: e.target.value }))} />
+          <Button onClick={addActivity}><Plus className="h-4 w-4" /> Add</Button>
+        </CardContent>
+      </Card>
 
-        {/* Sidebar / Quick Info */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card className="shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Trip Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div className="flex justify-between items-center pb-2 border-b">
-                <span className="text-neutral-500">Total Days</span>
-                <span className="font-semibold">{itineraryDays.length} Days</span>
-              </div>
-              <div className="flex justify-between items-center pb-2 border-b">
-                <span className="text-neutral-500">Est. Cost</span>
-                <span className="font-semibold text-emerald-600">${totalCost.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center pb-2 border-b">
-                <span className="text-neutral-500">Budget</span>
-                <span className="font-semibold">${(currentTrip?.budget || 0).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-neutral-500">Activities</span>
-                <span className="font-semibold">{activities.length} Planned</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <Card className="h-fit">
+          <CardHeader><CardTitle>Trip Summary</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <SummaryLine label="Days" value={itineraryDays.length.toString()} />
+            <SummaryLine label="Activities" value={activities.length.toString()} />
+            <SummaryLine label="Activity cost" value={`INR ${totalCost.toLocaleString()}`} />
+            <SummaryLine label="Trip budget" value={`INR ${(currentTrip?.budget || 0).toLocaleString()}`} />
+          </CardContent>
+        </Card>
 
-        {/* Timeline */}
-        <div className="lg:col-span-3 space-y-8">
+        <div className="space-y-6">
           {itineraryDays.length === 0 ? (
-            <div className="text-center py-16 space-y-3">
-              <p className="text-neutral-500 text-lg">No activities yet.</p>
-              <p className="text-neutral-400 text-sm">Use AI to generate a trip or add activities manually.</p>
-            </div>
+            <Card className="border-dashed">
+              <CardContent className="flex min-h-[260px] items-center justify-center text-sm text-muted-foreground">No activities yet. Add the first one above.</CardContent>
+            </Card>
           ) : (
             itineraryDays.map((day) => (
-              <div key={day.day} className="relative">
-                {/* Day Header */}
-                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur py-3 flex items-center justify-between border-b mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-indigo-600 text-white rounded-md h-10 w-10 flex items-center justify-center font-bold text-lg">
-                      {day.day}
-                    </div>
-                    <h2 className="text-xl font-bold">Day {day.day}</h2>
-                  </div>
+              <section key={day.day} className="space-y-3">
+                <div className="sticky top-12 z-10 flex items-center gap-3 border-b bg-background/90 py-3 backdrop-blur">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 font-semibold text-white">{day.day}</div>
+                  <h2 className="text-xl font-semibold">Day {day.day}</h2>
                 </div>
-
-                {/* Activities */}
-                <div className="space-y-3 pl-2">
-                  {day.activities.map((activity: any) => (
-                    <div key={activity._id} className="relative pl-8 group">
-                      <div className="absolute left-[11px] top-6 bottom-[-24px] w-0.5 bg-neutral-200 dark:bg-neutral-800" />
-                      <div className="absolute left-1.5 top-5 h-3 w-3 rounded-full border-2 border-indigo-600 bg-background z-10" />
-
-                      <Card className="hover:border-indigo-300 transition-colors cursor-pointer group shadow-sm">
-                        <div className="flex flex-row items-center p-4 gap-4">
-                          <div className="cursor-grab text-neutral-300 hover:text-neutral-500">
-                            <GripVertical className="h-5 w-5" />
-                          </div>
-                          <div className="min-w-[80px] text-sm font-semibold text-neutral-600 dark:text-neutral-400">
-                            {activity.time || "—"}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-base">{activity.title}</h4>
-                            <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
-                              {activity.location && (
-                                <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {activity.location}</span>
-                              )}
-                              {activity.cost > 0 && (
-                                <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" /> {activity.cost}</span>
-                              )}
-                              {activity.duration && (
-                                <span className="text-xs text-neutral-400">{activity.duration}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            {activity.type && (
-                              <Badge className={`border-none ${getTypeColor(activity.type)}`}>
-                                {activity.type}
-                              </Badge>
-                            )}
-                          </div>
+                {day.activities.map((activity, index) => (
+                  <motion.div key={activity._id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }} className="relative pl-8">
+                    <div className="absolute left-[11px] top-7 h-full w-px bg-border" />
+                    <div className="absolute left-1.5 top-6 h-3 w-3 rounded-full border-2 border-indigo-600 bg-background" />
+                    <Card className="transition-colors hover:border-indigo-300">
+                      <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
+                        <GripVertical className="hidden h-5 w-5 text-muted-foreground md:block" />
+                        <div className="flex min-w-24 items-center gap-2 text-sm font-medium text-muted-foreground"><Clock className="h-4 w-4" /> {activity.time || "TBD"}</div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{activity.title}</h3>
+                          <p className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                            {activity.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {activity.location}</span>}
+                            {!!activity.cost && <span className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> INR {activity.cost}</span>}
+                          </p>
                         </div>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                        {activity.type && <Badge variant="secondary">{activity.type}</Badge>}
+                        <Button variant="ghost" size="icon" onClick={() => deleteActivity(activity._id)}><Trash2 className="h-4 w-4" /></Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </section>
             ))
           )}
         </div>
       </div>
     </div>
-  );
+  )
+}
+
+function SummaryLine({ label, value }: { label: string; value: string }) {
+  return <div className="flex justify-between border-b pb-2 last:border-0"><span className="text-muted-foreground">{label}</span><span className="font-semibold">{value}</span></div>
+}
+
+function ItinerarySkeleton() {
+  return <div className="space-y-4 p-6"><Skeleton className="h-10 w-72" /><Skeleton className="h-24" /><Skeleton className="h-96" /></div>
 }

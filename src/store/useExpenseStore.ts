@@ -1,11 +1,22 @@
 import { create } from "zustand"
 
+export interface ExpenseRecord {
+  _id: string
+  tripId: string
+  category: string
+  amount: number
+  description?: string
+  date?: string
+}
+
+export type ExpensePayload = Omit<Partial<ExpenseRecord>, "_id">
+
 interface ExpenseStore {
-  expenses: any[]
+  expenses: ExpenseRecord[]
   loading: boolean
   fetchExpenses: (tripId: string) => Promise<void>
-  createExpense: (data: any) => Promise<any>
-  updateExpense: (id: string, data: any) => Promise<void>
+  createExpense: (data: ExpensePayload) => Promise<ExpenseRecord | { error?: string }>
+  updateExpense: (id: string, data: ExpensePayload) => Promise<void>
   deleteExpense: (id: string) => Promise<void>
 }
 
@@ -24,18 +35,18 @@ export const useExpenseStore = create<ExpenseStore>((set) => ({
     }
   },
 
-  createExpense: async (data: any) => {
+  createExpense: async (data: ExpensePayload) => {
     const res = await fetch("/api/expenses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
     const expense = await res.json()
-    if (res.ok) set((s) => ({ expenses: [expense, ...s.expenses] }))
+    if (res.ok) set((state) => ({ expenses: [expense, ...state.expenses] }))
     return expense
   },
 
-  updateExpense: async (id: string, data: any) => {
+  updateExpense: async (id: string, data: ExpensePayload) => {
     const res = await fetch(`/api/expenses/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -43,12 +54,12 @@ export const useExpenseStore = create<ExpenseStore>((set) => ({
     })
     if (res.ok) {
       const updated = await res.json()
-      set((s) => ({ expenses: s.expenses.map((e) => (e._id === id ? updated : e)) }))
+      set((state) => ({ expenses: state.expenses.map((expense) => (expense._id === id ? updated : expense)) }))
     }
   },
 
   deleteExpense: async (id: string) => {
     const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" })
-    if (res.ok) set((s) => ({ expenses: s.expenses.filter((e) => e._id !== id) }))
+    if (res.ok) set((state) => ({ expenses: state.expenses.filter((expense) => expense._id !== id) }))
   },
 }))

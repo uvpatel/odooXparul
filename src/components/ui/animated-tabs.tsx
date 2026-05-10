@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 type Tab = {
   title: string;
   value: string;
-  content?: string | React.ReactNode | any;
+  content?: string | ReactNode;
 };
 
 export const Tabs = ({

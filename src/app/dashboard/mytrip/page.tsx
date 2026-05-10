@@ -83,7 +83,7 @@ export default function MyTripsPage() {
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-3 right-3">
-                  <Badge className={`${statusColors[trip.status] || statusColors.planning} border-none capitalize`}>
+                  <Badge className={`${statusColors[trip.status || "planning"] || statusColors.planning} border-none capitalize`}>
                     {trip.status || "Planning"}
                   </Badge>
                 </div>

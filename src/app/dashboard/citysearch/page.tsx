@@ -1,92 +1,119 @@
-"use client";
+"use client"
 
-import React from "react";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Search, MapPin, Navigation, Star, ArrowRight, Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import { motion } from "motion/react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ArrowRight, MapPin, Search, Sparkles, Star } from "lucide-react"
 
-const cities = [
-  { name: "Paris", country: "France", index: "$$$", popular: true, image: "https://images.unsplash.com/photo-1502602898657-3e9076295eb1?auto=format&fit=crop&w=600&q=80" },
-  { name: "Tokyo", country: "Japan", index: "$$$", popular: true, image: "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=600&q=80" },
-  { name: "Bali", country: "Indonesia", index: "$", popular: true, image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80" },
-  { name: "Rome", country: "Italy", index: "$$", popular: false, image: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=600&q=80" },
-  { name: "Cape Town", country: "South Africa", index: "$$", popular: false, image: "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?auto=format&fit=crop&w=600&q=80" },
-  { name: "Rio de Janeiro", country: "Brazil", index: "$", popular: false, image: "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=600&q=80" }
-];
+interface Trip {
+  _id: string
+  title: string
+  destination: string
+  budget?: number
+  travelers?: number
+}
+
+const cityImages = [
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=900&q=80",
+]
 
 export default function CitySearchPage() {
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [query, setQuery] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    fetch("/api/trips")
+      .then((res) => res.json())
+      .then((data) => {
+        if (active) setTrips(Array.isArray(data) ? data : [])
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const destinations = useMemo(() => {
+    const grouped = new Map<string, Trip[]>()
+    for (const trip of trips) {
+      const key = trip.destination.trim()
+      if (!key) continue
+      grouped.set(key, [...(grouped.get(key) || []), trip])
+    }
+
+    return Array.from(grouped, ([destination, destinationTrips], index) => ({
+      destination,
+      trips: destinationTrips,
+      image: cityImages[index % cityImages.length],
+      totalBudget: destinationTrips.reduce((sum, trip) => sum + (trip.budget || 0), 0),
+      travelers: destinationTrips.reduce((sum, trip) => sum + (trip.travelers || 1), 0),
+    })).filter((city) => city.destination.toLowerCase().includes(query.toLowerCase()))
+  }, [query, trips])
+
   return (
-    <div className="container mx-auto max-w-5xl p-6 space-y-8 animate-in fade-in duration-500">
-      <div className="text-center max-w-2xl mx-auto space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">Discover Destinations</h1>
-        <p className="text-lg text-neutral-500">
-          Search over 10,000 cities to add to your personalized itinerary.
-        </p>
-        
-        <div className="relative mt-8">
-          <Search className="absolute left-4 top-3.5 h-5 w-5 text-neutral-400" />
-          <Input 
-            placeholder="Search for a city, country, or region..." 
-            className="pl-12 h-14 text-lg rounded-full shadow-sm bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
-          />
-          <Button className="absolute right-1.5 top-1.5 rounded-full px-6 bg-indigo-600 hover:bg-indigo-700">
-            Search
-          </Button>
-        </div>
-        
-        <div className="flex items-center justify-center gap-2 pt-4 flex-wrap">
-          <span className="text-sm text-neutral-500">Popular:</span>
-          {["London", "Dubai", "Singapore", "New York"].map(tag => (
-            <Badge key={tag} variant="secondary" className="cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
-              {tag}
-            </Badge>
-          ))}
+    <div className="mx-auto max-w-6xl space-y-8 p-4 md:p-6">
+      <div className="mx-auto max-w-2xl space-y-4 text-center">
+        <Badge variant="outline" className="rounded-md"><Sparkles className="h-3.5 w-3.5" /> Dynamic destinations</Badge>
+        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Discover Destinations</h1>
+        <p className="text-muted-foreground">Search cities already connected to your real TravelLoop trips.</p>
+        <div className="relative">
+          <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search your destinations..." className="h-12 rounded-full pl-12" />
         </div>
       </div>
 
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          Trending Destinations <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cities.map((city, i) => (
-            <Card key={i} className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-none bg-neutral-50 dark:bg-neutral-900/50">
-              <div className="h-56 overflow-hidden relative">
-                <img 
-                  src={city.image} 
-                  alt={city.name} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4 text-white">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <h3 className="text-2xl font-bold">{city.name}</h3>
-                      <p className="flex items-center gap-1 text-sm text-white/80 mt-1">
-                        <MapPin className="h-3.5 w-3.5" /> {city.country}
-                      </p>
-                    </div>
-                    <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-none">
-                      {city.index}
-                    </Badge>
+      {loading ? (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-72 rounded-xl" />)}
+        </div>
+      ) : destinations.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">
+            <MapPin className="h-10 w-10 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">No destinations found</h2>
+            <p className="max-w-md text-sm text-muted-foreground">Create a trip or generate one with AI, and its destination will appear here automatically.</p>
+            <Button asChild><Link href="/dashboard/createtrip">Create trip</Link></Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {destinations.map((city, index) => (
+            <motion.div key={city.destination} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
+              <Card className="group overflow-hidden">
+                <div className="relative h-56 overflow-hidden">
+                  <img src={city.image} alt={city.destination} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/20 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <h3 className="text-2xl font-semibold">{city.destination}</h3>
+                    <p className="mt-1 flex items-center gap-1 text-sm text-white/80"><Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> {city.trips.length} trip{city.trips.length === 1 ? "" : "s"} planned</p>
                   </div>
                 </div>
-              </div>
-              <CardContent className="p-4 flex gap-2">
-                <Button className="w-full bg-neutral-900 dark:bg-white dark:text-neutral-900 gap-2">
-                  <Plus className="h-4 w-4" /> Add to Trip
-                </Button>
-                <Button variant="outline" size="icon" className="shrink-0">
-                  <Navigation className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
+                <CardContent className="space-y-4 p-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-lg bg-muted p-3"><p className="text-muted-foreground">Budget</p><p className="font-semibold">INR {city.totalBudget.toLocaleString()}</p></div>
+                    <div className="rounded-lg bg-muted p-3"><p className="text-muted-foreground">Travelers</p><p className="font-semibold">{city.travelers}</p></div>
+                  </div>
+                  <Button asChild className="w-full">
+                    <Link href={`/dashboard/itinerary?tripId=${city.trips[0]._id}`}>Open itinerary <ArrowRight className="h-4 w-4" /></Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
-      </div>
+      )}
     </div>
-  );
+  )
 }

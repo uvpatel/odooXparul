@@ -49,7 +49,7 @@ export default function HeroSectionOne() {
           }}
           className="relative z-10 mx-auto max-w-xl py-4 text-center text-lg font-normal text-neutral-600 dark:text-neutral-400"
         >
-          With Traveloop's AI, you can generate personalized itineraries, manage your travel
+          With Traveloop&apos;s AI, you can generate personalized itineraries, manage your travel
           budget, and keep your packing checklist organized all in one place.
         </motion.p>
         <motion.div

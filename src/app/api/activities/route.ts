@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server"
 import { connectDB } from "@/lib/mongodb"
 import { createActivitySchema } from "@/schemas/activity.schema"
 import { getActivitiesByTrip, createActivity } from "@/controllers/activity.controller"
+import { Activity } from "@/models/activities.model"
 
 export async function GET(req: Request) {
   try {
@@ -12,11 +13,11 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url)
     const tripId = searchParams.get("tripId")
-    if (!tripId) return NextResponse.json({ error: "tripId is required" }, { status: 400 })
-
-    const activities = await getActivitiesByTrip(userId, tripId)
+    const activities = tripId
+      ? await getActivitiesByTrip(userId, tripId)
+      : await Activity.find({ userId }).sort({ createdAt: -1 }).lean()
     return NextResponse.json(activities)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch activities" }, { status: 500 })
   }
 }
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
 
     const activity = await createActivity({ ...validated.data, userId })
     return NextResponse.json(activity, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to create activity" }, { status: 500 })
   }
 }

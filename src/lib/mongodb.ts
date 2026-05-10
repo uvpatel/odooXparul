@@ -6,25 +6,36 @@ if (!MONGODB_URI) {
   throw new Error("Missing MONGODB_URI")
 }
 
-let cached = (global as any).mongoose
+interface MongooseCache {
+  conn: typeof mongoose | null
+  promise: Promise<typeof mongoose> | null
+}
+
+const globalForMongoose = globalThis as typeof globalThis & {
+  mongoose?: MongooseCache
+}
+
+let cached = globalForMongoose.mongoose
 
 if (!cached) {
-  cached = (global as any).mongoose = {
+  cached = globalForMongoose.mongoose = {
     conn: null,
     promise: null,
   }
 }
 
+const mongooseCache = cached
+
 export async function connectDB() {
-  if (cached.conn) {
-    return cached.conn
+  if (mongooseCache.conn) {
+    return mongooseCache.conn
   }
 
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI)
+  if (!mongooseCache.promise) {
+    mongooseCache.promise = mongoose.connect(MONGODB_URI)
   }
 
-  cached.conn = await cached.promise
+  mongooseCache.conn = await mongooseCache.promise
 
-  return cached.conn
+  return mongooseCache.conn
 }

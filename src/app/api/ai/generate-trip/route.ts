@@ -7,6 +7,13 @@ import { createActivity } from "@/controllers/activity.controller"
 import { createPackingItem } from "@/controllers/packing.controller"
 import { createExpense } from "@/controllers/expense.controller"
 
+interface GenerateTripRequestBody {
+  prompt?: string
+  travelStyle?: string
+  pace?: string
+  startingPoint?: string
+}
+
 export async function POST(req: Request) {
   try {
     await connectDB()
@@ -15,7 +22,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { prompt, travelStyle, pace, startingPoint } = await req.json()
+    const { prompt, travelStyle, pace, startingPoint } = (await req.json()) as GenerateTripRequestBody
 
     if (!prompt || prompt.trim().length < 5) {
       return NextResponse.json({ error: "Please provide a detailed trip description" }, { status: 400 })
@@ -37,7 +44,7 @@ export async function POST(req: Request) {
       status: "planning",
     })
 
-    const tripId = trip._id.toString()
+    const tripId = String(trip._id)
 
     // Save activities from itinerary
     if (aiResult.itinerary && Array.isArray(aiResult.itinerary)) {
@@ -75,13 +82,15 @@ export async function POST(req: Request) {
     // Save budget breakdown as expenses
     if (aiResult.budgetBreakdown && Array.isArray(aiResult.budgetBreakdown)) {
       for (const entry of aiResult.budgetBreakdown) {
-        await createExpense({
-          userId,
-          tripId,
-          category: entry.category,
-          amount: entry.amount,
-          description: `AI estimated ${entry.category} budget`,
-        })
+        if (entry.amount > 0) {
+          await createExpense({
+            userId,
+            tripId,
+            category: entry.category,
+            amount: entry.amount,
+            description: `AI estimated ${entry.category} budget`,
+          })
+        }
       }
     }
 
@@ -91,11 +100,15 @@ export async function POST(req: Request) {
       packingList: aiResult.packingList,
       budgetBreakdown: aiResult.budgetBreakdown,
     }, { status: 201 })
-  } catch (error: any) {
+  } catch (error) {
     console.error("AI generate trip error:", error)
     return NextResponse.json(
-      { error: error.message || "Failed to generate trip" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     )
   }
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Failed to generate trip"
 }

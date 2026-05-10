@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
+import NoiseBackgroundDemo from "./noise-background-demo";
 
 export default function TravelopHero() {
   return (
@@ -13,7 +14,7 @@ export default function TravelopHero() {
         <p className="relative z-10 mx-auto mt-4 max-w-xl text-center text-neutral-800 dark:text-neutral-500">
           Create seamless travel plans with custom routes, expense tracking, and smart recommendations—all in one place.
         </p>
-
+        <NoiseBackgroundDemo />
       </div>
     </div>
   );

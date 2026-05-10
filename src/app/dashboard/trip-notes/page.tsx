@@ -1,96 +1,163 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { NotebookPen, Search, Plus, Clock, MoreVertical, MapPin } from "lucide-react";
+import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Clock, NotebookPen, Plus, Search, Trash2 } from "lucide-react"
+
+interface Trip {
+  _id: string
+  title: string
+}
+
+interface Note {
+  _id: string
+  tripId: string
+  title?: string
+  content: string
+  tags?: string[]
+  updatedAt?: string
+}
 
 export default function TripNotesPage() {
-  const [notes] = useState([
-    {
-      id: 1,
-      title: "Hotel Check-in Details",
-      content: "Booking ref: #PARIS1234\nCheck-in is at 3:00 PM. Contact host 30 mins before arrival at +33 6 12 34 56 78.",
-      date: "May 10, 2026",
-      location: "Paris, France",
-      color: "bg-amber-100 dark:bg-amber-900/20"
-    },
-    {
-      id: 2,
-      title: "Must-try Foods",
-      content: "- Escargot at Le Marais\n- Crepes near Eiffel Tower\n- Onion Soup at Montmartre",
-      date: "May 12, 2026",
-      location: "General",
-      color: "bg-blue-100 dark:bg-blue-900/20"
-    },
-    {
-      id: 3,
-      title: "Flight PNR & Gate",
-      content: "AirFrance AF1234\nPNR: X7Y8Z9\nTerminal 2E, Gate K42\nBoarding at 08:15 AM.",
-      date: "May 15, 2026",
-      location: "Airport",
-      color: "bg-emerald-100 dark:bg-emerald-900/20"
+  const searchParams = useSearchParams()
+  const requestedTripId = searchParams.get("tripId")
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [selectedTripId, setSelectedTripId] = useState("")
+  const [notes, setNotes] = useState<Note[]>([])
+  const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState("")
+  const [form, setForm] = useState({ title: "", content: "", tags: "" })
+
+  useEffect(() => {
+    let active = true
+    fetch("/api/trips")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return
+        const nextTrips = Array.isArray(data) ? data : []
+        setTrips(nextTrips)
+        setSelectedTripId(requestedTripId || nextTrips[0]?._id || "")
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
     }
-  ]);
+  }, [requestedTripId])
+
+  useEffect(() => {
+    if (!selectedTripId) return
+    let active = true
+    fetch(`/api/notes?tripId=${selectedTripId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active) setNotes(Array.isArray(data) ? data : [])
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [selectedTripId])
+
+  const currentTrip = trips.find((trip) => trip._id === selectedTripId)
+  const filteredNotes = useMemo(() => {
+    const needle = query.toLowerCase()
+    return notes.filter((note) => [note.title, note.content, ...(note.tags || [])].join(" ").toLowerCase().includes(needle))
+  }, [notes, query])
+
+  async function createNote() {
+    if (!selectedTripId || !form.content.trim()) return
+    const optimistic: Note = {
+      _id: `temp-${Date.now()}`,
+      tripId: selectedTripId,
+      title: form.title || "Untitled note",
+      content: form.content,
+      tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+    }
+    setNotes((items) => [optimistic, ...items])
+    setForm({ title: "", content: "", tags: "" })
+    const res = await fetch("/api/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(optimistic),
+    })
+    const saved = await res.json()
+    if (res.ok) setNotes((items) => items.map((note) => (note._id === optimistic._id ? saved : note)))
+    else setNotes((items) => items.filter((note) => note._id !== optimistic._id))
+  }
+
+  async function deleteNote(id: string) {
+    const previous = notes
+    setNotes((items) => items.filter((note) => note._id !== id))
+    const res = await fetch(`/api/notes/${id}`, { method: "DELETE" })
+    if (!res.ok) setNotes(previous)
+  }
+
+  if (loading) return <div className="space-y-4 p-6"><Skeleton className="h-10 w-72" /><Skeleton className="h-24" /><Skeleton className="h-96" /></div>
 
   return (
-    <div className="container mx-auto max-w-5xl p-6 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            Trip Journal & Notes <NotebookPen className="h-6 w-6 text-indigo-500" />
-          </h1>
-          <p className="text-neutral-500 mt-1">Jot down important details, booking references, or travel memories.</p>
+          <Badge variant="outline" className="mb-3 rounded-md">{currentTrip?.title || "No trip selected"}</Badge>
+          <h1 className="flex items-center gap-3 text-3xl font-semibold tracking-tight">Trip Journal & Notes <NotebookPen className="h-6 w-6 text-indigo-500" /></h1>
+          <p className="mt-1 text-sm text-muted-foreground">Search, tag, create, and remove notes synced to MongoDB.</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
-          <Plus className="h-4 w-4" /> New Note
-        </Button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-5 w-5 text-neutral-400" />
-        <Input 
-          placeholder="Search notes by title or content..." 
-          className="pl-10 h-12 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 shadow-sm"
-        />
-      </div>
+      {!selectedTripId ? (
+        <Card className="border-dashed"><CardContent className="flex min-h-[260px] items-center justify-center text-sm text-muted-foreground">Create a trip to start writing notes.</CardContent></Card>
+      ) : (
+        <>
+          <div className="grid gap-4 lg:grid-cols-[0.75fr_1.25fr]">
+            <Card>
+              <CardHeader><CardTitle>New Note</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <Input placeholder="Title" value={form.title} onChange={(e) => setForm((value) => ({ ...value, title: e.target.value }))} />
+                <textarea className="min-h-32 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm" placeholder="Markdown, booking refs, reminders..." value={form.content} onChange={(e) => setForm((value) => ({ ...value, content: e.target.value }))} />
+                <Input placeholder="Tags, comma separated" value={form.tags} onChange={(e) => setForm((value) => ({ ...value, tags: e.target.value }))} />
+                <Button className="w-full" onClick={createNote}><Plus className="h-4 w-4" /> Save note</Button>
+              </CardContent>
+            </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Create Note Card */}
-        <Card className="shadow-sm border-dashed border-2 border-neutral-300 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-900/20 flex flex-col items-center justify-center min-h-[250px] cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors">
-          <div className="h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mb-3">
-            <Plus className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <h3 className="font-medium text-lg text-neutral-700 dark:text-neutral-300">Create New Note</h3>
-          <p className="text-sm text-neutral-500 text-center px-6 mt-1">Save quick thoughts, links, or addresses.</p>
-        </Card>
-
-        {/* Note Cards */}
-        {notes.map((note) => (
-          <Card key={note.id} className={`shadow-sm overflow-hidden flex flex-col ${note.color} border-none`}>
-            <CardHeader className="pb-3 pt-5 px-5 flex flex-row items-start justify-between space-y-0">
-              <div>
-                <CardTitle className="text-lg leading-tight text-neutral-900 dark:text-neutral-100">{note.title}</CardTitle>
-                <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-neutral-600 dark:text-neutral-400">
-                  <MapPin className="h-3 w-3" /> {note.location}
-                </div>
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search notes..." className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2 shrink-0 text-neutral-600">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="px-5 flex-1">
-              <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-line leading-relaxed">
-                {note.content}
-              </p>
-            </CardContent>
-            <CardFooter className="px-5 pb-4 pt-0 text-xs text-neutral-500 flex items-center gap-1.5">
-              <Clock className="h-3 w-3" /> Last edited {note.date}
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {filteredNotes.length === 0 ? (
+                  <Card className="border-dashed md:col-span-2"><CardContent className="flex min-h-[220px] items-center justify-center text-sm text-muted-foreground">No notes found.</CardContent></Card>
+                ) : filteredNotes.map((note) => (
+                  <Card key={note._id} className="flex min-h-56 flex-col">
+                    <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
+                      <div>
+                        <CardTitle className="text-lg">{note.title || "Untitled note"}</CardTitle>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {(note.tags || []).map((tag) => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => deleteNote(note._id)}><Trash2 className="h-4 w-4" /></Button>
+                    </CardHeader>
+                    <CardContent className="flex-1">
+                      <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{note.content}</p>
+                    </CardContent>
+                    <CardFooter className="text-xs text-muted-foreground"><Clock className="mr-1 h-3 w-3" /> Autosaved to TravelLoop</CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
-  );
+  )
 }

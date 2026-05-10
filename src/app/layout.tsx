@@ -18,7 +18,6 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body>
-          <FloatingNavDemo />
           {children}</body>
       </html>
     </ClerkProvider>
