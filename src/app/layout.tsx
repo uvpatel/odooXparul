@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Acertinity ",
-  description: "",
+  title: "TraveLoop ",
+  description: "Create seamless travel plans with custom routes, expense tracking, and smart recommendations—all in one place.",
 };
 
 export default function RootLayout({
