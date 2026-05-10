@@ -179,7 +179,7 @@ export const SkeletonTwo = () => {
             variants={imageVariants}
             key={"images-first" + idx}
             style={{
-              rotate: Math.random() * 20 - 10,
+              rotate: (idx % 2 === 0 ? 1 : -1) * (idx % 3 + 1) * 3,
             }}
             whileHover="whileHover"
             whileTap="whileTap"
@@ -200,7 +200,7 @@ export const SkeletonTwo = () => {
           <motion.div
             key={"images-second" + idx}
             style={{
-              rotate: Math.random() * 20 - 10,
+              rotate: (idx % 2 === 0 ? -1 : 1) * ((idx + 1) % 3 + 1) * 3,
             }}
             variants={imageVariants}
             whileHover="whileHover"
