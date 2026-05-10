@@ -2,6 +2,10 @@
 
 ## 1. Opening
 
+
+live demo
+- Traveloop(https://odoo-xparul-virtual.vercel.app/)
+
 Good morning/afternoon everyone.
 
 Today I am presenting **TravelLoop**, an AI-powered travel planning web application. The main goal of this project is to help users plan complete trips from one place. Instead of using separate tools for itinerary planning, budgeting, packing, and notes, TravelLoop combines all of these features inside a single dashboard.
