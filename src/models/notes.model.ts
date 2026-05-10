@@ -1,12 +1,16 @@
 import mongoose, { Schema, models, model } from "mongoose";
 
 export interface NoteInterface {
-  trip_id: mongoose.Types.ObjectId;
+  userId: string;
+  tripId: string;
   content: string;
+  title?: string;
 }
 
 const noteSchema = new Schema<NoteInterface>({
-  trip_id: { type: Schema.Types.ObjectId, ref: "Trip", required: true },
+  userId: { type: String, required: true, index: true },
+  tripId: { type: String, required: true, index: true },
+  title: { type: String },
   content: { type: String, required: true },
 }, { timestamps: true });
 

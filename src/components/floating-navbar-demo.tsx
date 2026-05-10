@@ -33,7 +33,7 @@ export default function FloatingNavDemo() {
 }
 const DummyContent = () => {
   return (
-    <div className="relative grid h-[40rem] w-full grid-cols-1 rounded-md border border-neutral-200 bg-white dark:border-white/[0.2] dark:bg-black">
+    <div className="relative grid h-160 w-full grid-cols-1 rounded-md border border-neutral-200 bg-white dark:border-white/20 dark:bg-black">
 
       <div className="bg-grid-black/[0.1] dark:bg-grid-white/[0.2] absolute inset-0" />
     </div>

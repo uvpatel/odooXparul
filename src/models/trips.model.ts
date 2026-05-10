@@ -1,21 +1,29 @@
 import mongoose, { Schema, models, model } from "mongoose";
 
 export interface TripInterface {
-  user_id: mongoose.Types.ObjectId;
+  userId: string; // Clerk user ID
   title: string;
+  destination: string;
   description?: string;
-  start_date?: Date;
-  end_date?: Date;
+  startDate?: string;
+  endDate?: string;
   budget?: number;
+  travelers?: number;
+  status?: string;
+  coverImage?: string;
 }
 
 const tripSchema = new Schema<TripInterface>({
-  user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, required: true, index: true },
   title: { type: String, required: true },
+  destination: { type: String, required: true },
   description: { type: String },
-  start_date: { type: Date },
-  end_date: { type: Date },
+  startDate: { type: String },
+  endDate: { type: String },
   budget: { type: Number },
+  travelers: { type: Number, default: 1 },
+  status: { type: String, enum: ["planning", "upcoming", "ongoing", "completed"], default: "planning" },
+  coverImage: { type: String },
 }, { timestamps: true });
 
 export const Trip = models.Trip || model<TripInterface>("Trip", tripSchema);
