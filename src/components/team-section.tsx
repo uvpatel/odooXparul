@@ -59,7 +59,7 @@ export default async function TeamShowcase() {
     },
     {
       id: 2,
-      name: "Urvish Patel",
+      name: "Ujjwal Patel",
       designation: "CEO",
       image:
         "https://www.image2url.com/r2/default/images/1778320368689-769149bb-4f8b-422d-a583-d14f4a9f5b51.jpeg",
