@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 import { ClerkProvider } from '@clerk/nextjs'
+import FloatingNavDemo from '@/components/floating-navbar-demo'
 
 export const metadata: Metadata = {
   title: 'TraveLoop',
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body>{children}</body>
+        <body>
+          <FloatingNavDemo />
+          {children}</body>
       </html>
     </ClerkProvider>
   )
