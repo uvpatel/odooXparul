@@ -1,14 +1,13 @@
 import {
   UserProfile,
-  SignedIn,
-  SignedOut,
+  Show,
   RedirectToSignIn,
 } from '@clerk/nextjs'
 
 export default function UserProfilePage() {
   return (
     <>
-      <SignedIn>
+      <Show when="signed-in">
         <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
           <UserProfile
             appearance={{
@@ -19,11 +18,11 @@ export default function UserProfilePage() {
             }}
           />
         </div>
-      </SignedIn>
+      </Show>
 
-      <SignedOut>
+      <Show when="signed-out">
         <RedirectToSignIn />
-      </SignedOut>
+      </Show>
     </>
   )
 }
