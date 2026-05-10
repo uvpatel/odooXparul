@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Clock, DollarSign, Star, Plus, Filter } from "lucide-react";
 
 const activities = [
-  { id: 1, title: "Eiffel Tower Summit Access", type: "Sightseeing", duration: "2h", cost: 45, rating: 4.8, reviews: 1240 },
+  // { id: 1, title: "Eiffel Tower Summit Access", type: "Sightseeing", duration: "2h", cost: 45, rating: 4.8, reviews: 1240 },
   { id: 2, title: "Seine River Dinner Cruise", type: "Food & Drink", duration: "2.5h", cost: 120, rating: 4.6, reviews: 856 },
   { id: 3, title: "Louvre Museum Skip-the-line", type: "Art & Culture", duration: "3h", cost: 35, rating: 4.9, reviews: 3420 },
   { id: 4, title: "Montmartre Walking Tour", type: "Tour", duration: "1.5h", cost: 20, rating: 4.7, reviews: 512 },
