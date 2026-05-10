@@ -18,7 +18,7 @@ export function NavUser({
   return (
     <SidebarMenu>
       <SidebarMenuItem className="flex justify-center p-2">
-        <UserButton afterSignOutUrl="/" showName />
+        <UserButton />
       </SidebarMenuItem>
     </SidebarMenu>
   )
