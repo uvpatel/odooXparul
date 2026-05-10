@@ -35,7 +35,7 @@ export default async function TeamShowcase() {
       name: "Hiten Bhadiyadra",
       designation: "CFO | Investor",
       image:
-        "https://www.image2url.com/r2/default/images/1778320260430-dd7490df-7791-4861-b622-6ae126034e3b.jpeg",
+        "https://www.image2url.com/r2/default/images/1778389958144-0d23df13-fe82-4f71-8502-70499d883873.jpeg",
         bio: "Supports the company with financial discipline and investor perspective, helping every bet stay grounded in strategy.",
       tag: "Finance",
     },
@@ -50,10 +50,10 @@ export default async function TeamShowcase() {
     },
     {
         id: 6,
-        name: "Jeet Patel",
-        designation: "CPO & Investor",
+        name: "Krish Koyani",
+        designation: "",
         image:
-        "https://www.image2url.com/r2/default/images/1778320456432-7d1ded71-1ebe-4490-bb97-f2ded2f7f91f.jpeg",
+        "https://www.image2url.com/r2/default/images/1778390007483-05167c4b-da96-402b-b08f-3245284f6555.jpeg",
         bio: "Shapes product direction with an investor mindset, balancing user value, market fit, and long-term growth.",
         tag: "Product",
     },
