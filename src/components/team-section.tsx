@@ -32,7 +32,7 @@ export default async function TeamShowcase() {
     },
     {
         id: 4,
-      name: "Hiten Bhadiyadra",
+      name: "Viveksinh Chavda",
       designation: "CFO | Investor",
       image:
         "https://www.image2url.com/r2/default/images/1778389958144-0d23df13-fe82-4f71-8502-70499d883873.jpeg",
