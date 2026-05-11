@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function NoiseBackgroundDemo() {
   return (
-    <div className="flex justify-center">
+    <div className="flex z-500 justify-center">
       <NoiseBackground
         containerClassName="w-fit p-2 rounded-full mx-auto"
         gradientColors={[
