@@ -32,7 +32,7 @@ function GradientLayer({
 
   return (
     <motion.div
-      className="absolute inset-0"
+      className="absolute inset-0 z-100"
       style={{
         opacity,
         background,
